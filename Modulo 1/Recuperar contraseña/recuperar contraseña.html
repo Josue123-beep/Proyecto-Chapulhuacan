@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recuperacion de Contraseña</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      height: 100vh;
+      background-color: #9F2241;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #9F2241;
+      overflow: hidden;
+    }
+
+    .main-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 90vw;
+      max-width: 1100px;
+      gap: 150px;
+    }
+
+    .logo-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .logo {
+      max-width: 200%;
+      width: 700px;
+      height: auto;
+    }
+    .container {
+      flex: 1;
+      background-color: #fff;
+      padding: 2.5em 3em;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-sizing: border-box;
+      color: #9F2241;
+    }
+
+    .welcome-large {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 0.2em;
+    }
+
+    .welcome-small {
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: 1em;
+    }
+
+  .input-group {
+  width: 100%;
+  margin-bottom: 0.6em;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+  .input-group label {
+  font-weight: 700;
+  color: #9F2241;
+  width: 100%;
+  margin-bottom: 0.3em;
+  font-size: 1em;
+  text-align: left;
+}
+
+    input {
+      width: calc(100% - 2em);
+      padding: 0.7em 1em;
+      margin: 0.6em 0;
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 500;
+      color: #000;
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #7D1935;
+      box-shadow: 0 0 8px #7D1935;
+    }
+
+    button.recover-btn {
+      background-color: #7D1935;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9em;
+      padding: 0.5em;
+      width: 70%;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 0.5em;
+    }
+
+    button.recover-btn:hover {
+      background-color: #5E0F2F;
+    }
+
+    .small-actions {
+      margin-top: 1.5em;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .link-btn {
+      background-color: transparent;
+      border: none;
+      color: inherit;
+      font-size: 0.95em;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    #mensaje {
+      margin-top: 15px;
+      font-weight: 700;
+      min-height: 1.5em;
+      user-select: none;
+      color: #9F2241;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="logo-container">
+      <img src="../Chapulhuacan.png" alt="Logo" class="logo" />
+    </div>
+
+    <div class="container" role="main" aria-label="Recuperación de contraseña">
+      <div class="welcome-large">Recupera tu contraseña</div><br><br>
+
+      <div class="input-group">
+        <label for="correo">Ingresa tu correo electrónico</label>
+        <input type="email" id="correo" placeholder="Correo electrónico" required pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$" />
+      </div>
+     
+      <button class="recover-btn" onclick="recuperar()">Recuperar contraseña</button>
+
+      <div class="small-actions">
+    <button class="link-btn" onclick="window.location.href='../Login/login.html'">Volver al inicio de sesión</button>
+      </div>
+
+      <div id="mensaje" role="alert" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script>
+function recuperar() {
+  const correo = document.getElementById('correo').value.trim();
+  const mensaje = document.getElementById('mensaje');
+
+  if (!correo) {
+    mensaje.style.color = '#9F2241';
+    mensaje.textContent = 'Por favor, escribe tu correo.';
+    return;
+  }
+
+  mensaje.style.color = '#9F2241';
+  mensaje.textContent = 'Procesando...';
+
+  fetch('/CHAPULHUACAN/Controllers/cambiarContraController.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `email=${encodeURIComponent(correo)}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    mensaje.style.color = data.icon === 'success' ? 'green' : '#9F2241';
+    mensaje.textContent = data.text;
+  })
+  .catch(() => {
+    mensaje.style.color = '#9F2241';
+    mensaje.textContent = 'Error de conexión con el servidor.';
+  });
+}
+  </script>
+
+</body>
+</html>

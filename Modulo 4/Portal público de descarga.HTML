@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal de Documentos Municipio de Chapulhuacán</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    header {
+      background-color: #9F2241;
+      color: white;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      gap: 200px;
+    }
+    header img {
+      height: 70px;
+      margin-left: 60px;
+    }
+    header h1 {
+      font-size: 30px;
+      margin: 0;
+      font-weight: 700;
+    }
+    main {
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    form#filter-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+    form#filter-form > div {
+      flex: 1 1 180px;
+      min-width: 150px;
+    }
+    form#filter-form > div.button-container {
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      gap: 8px;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+      color: #9F2241;
+    }
+    select, input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    select:focus, input[type="date"]:focus {
+      outline: none;
+      border-color: #7D1935;
+      box-shadow: 0 0 8px #7D1935;
+    }
+    button[type="submit"], button#clear-btn {
+      padding: 8px 15px;
+      font-weight: bold;
+      background-color: #9F2241;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      height: 40px;
+      font-size: 16px;
+    }
+    button[type="submit"]:hover, button#clear-btn:hover {
+      background-color: #7D1935;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #9F2241;
+      color: white;
+    }
+    th:last-child, td:last-child {
+      width: 110px;
+      padding: 6px 8px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    button.view, button.download {
+      background-color: #7D1935;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      margin: 2px;
+      transition: background-color 0.3s ease;
+    }
+    button.view:hover, button.download:hover {
+      background-color: #5E0F2F;
+    }
+    #pdf-viewer {
+      margin-top: 30px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    #pdf-viewer h2 {
+      color: #9F2241;
+      margin-bottom: 10px;
+    }
+    #pdf-frame {
+      width: 100%;
+      max-width: 900px;
+      height: 600px;
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+    }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 20px;
+      }
+      header h1 {
+        font-size: 20px;
+        text-align: center;
+      }
+      form#filter-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      button[type="submit"], button#clear-btn {
+        width: 100%;
+        height: 45px;
+      }
+      th:last-child, td:last-child {
+        width: auto;
+        white-space: normal;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header role="banner">
+      <img src="../../CHAPULHUACAN/Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+    <h1>Portal de Documentos Chapulhuacán</h1>
+  </header>
+
+  <main role="main" aria-label="Portal público de descarga de documentos del municipio de Chapulhuacán">
+    <form id="filter-form" onsubmit="event.preventDefault(); filterDocuments();">
+      <div>
+        <label for="type">Tipo de documento</label>
+        <select id="type" name="type">
+          <option value="">Todos</option>
+          <option value="Acta">Acta</option>
+          <option value="Reglamento">Reglamento</option>
+          <option value="Informe">Informe</option>
+          <option value="Convocatoria">Convocatoria</option>
+          <option value="Solicitud">Solicitud</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div>
+        <label for="area">Área municipal</label>
+        <select id="area" name="area">
+          <option value="">Todas</option>
+          <option value="Tesorería">Tesorería</option>
+          <option value="Obras Públicas">Obras Públicas</option>
+          <option value="DIF">DIF</option>
+          <option value="Otra">Otra</option>
+        </select>
+      </div>
+      <div>
+        <label for="date">Fecha</label>
+        <input type="date" id="date" name="date" />
+      </div>
+      <div class="button-container">
+        <button type="submit">Buscar</button>
+        <button type="button" id="clear-btn">Limpiar</button>
+      </div>
+    </form>
+
+    <table aria-live="polite">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Tipo</th>
+          <th>Área</th>
+          <th>Fecha</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="document-list"></tbody>
+    </table>
+
+    <section id="pdf-viewer">
+      <h2>Visualización del Documento</h2>
+      <iframe id="pdf-frame" src="" frameborder="0"></iframe>
+    </section>
+  </main>
+
+  <script>
+    function filterDocuments() {
+      const type = document.getElementById('type').value;
+      const area = document.getElementById('area').value;
+      const date = document.getElementById('date').value;
+      const tbody = document.getElementById('document-list');
+      const viewer = document.getElementById('pdf-viewer');
+      const pdfFrame = document.getElementById('pdf-frame');
+
+      tbody.innerHTML = '';
+      viewer.style.display = 'none';
+      pdfFrame.src = '';
+
+      const params = new URLSearchParams();
+      if (type) params.append('type', type);
+      if (area) params.append('area', area);
+      if (date) params.append('date', date);
+
+      fetch('../../CHAPULHUACAN/Controllers/portaldescargaController.php?' + params.toString())
+        .then(res => res.json())
+        .then(docs => {
+          if (!docs.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#7D1935; font-weight:bold;">No se encontraron documentos.</td></tr>';
+            return;
+          }
+          docs.forEach(doc => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${doc.title}</td>
+              <td>${doc.type}</td>
+              <td>${doc.area}</td>
+              <td>${doc.date}</td>
+              <td>
+                <button class="view">Ver</button>
+                <button class="download">Descargar</button>
+              </td>
+            `;
+            tr.querySelector('.view').addEventListener('click', () => {
+              viewer.style.display = 'flex';
+              pdfFrame.src = '../../CHAPULHUACAN/uploads/' + doc.file;
+              pdfFrame.focus();
+            });
+            // --- CÓDIGO CORRECTO PARA CONTAR DESCARGAS Y REFLEJAR EN DASHBOARD ---
+            tr.querySelector('.download').addEventListener('click', () => {
+              window.open('../../CHAPULHUACAN/Controllers/descargas.php?id=' + doc.id, '_blank');
+              // (Opcional) Notificar al dashboard si está abierto
+              try {
+                const bc = new BroadcastChannel('dashboard_channel');
+                bc.postMessage('descarga_realizada');
+                bc.close();
+              } catch (e) {}
+            });
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(() => {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar los documentos.</td></tr>';
+        });
+    }
+
+    function clearAndShowAll() {
+      document.getElementById('type').value = '';
+      document.getElementById('area').value = '';
+      document.getElementById('date').value = '';
+      document.getElementById('pdf-viewer').style.display = 'none';
+      document.getElementById('pdf-frame').src = '';
+      filterDocuments(); 
+    }
+
+    document.getElementById('clear-btn').addEventListener('click', clearAndShowAll);
+
+    window.onload = filterDocuments;
+  </script>
+</body>
+</html>

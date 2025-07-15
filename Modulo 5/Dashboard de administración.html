@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard de Administración</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    header {
+      background-color: #9F2241;
+      color: white;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      gap: 100px;
+    }
+    header img {
+      height: 70px;
+      margin-left: 60px;
+    }
+    header h1 {
+      font-size: 30px;
+      margin: 0;
+      font-weight: 700;
+    }
+    main {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #9F2241;
+      margin-bottom: 1em;
+    }
+    .cards {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+    }
+    .card {
+      flex: 1;
+      min-width: 280px;
+      background: white;
+      padding: 25px 20px 20px 20px;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px 0 rgba(159,34,65,0.09);
+      transition: transform 0.15s;
+      text-align: center;
+    }
+    .card:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 4px 24px 0 rgba(159,34,65,0.16);
+    }
+    .card h3 {
+      color: #9F2241;
+      margin-top: 0;
+      font-size: 1.2em;
+      margin-bottom: 18px;
+      letter-spacing: 0.5px;
+    }
+    .card.small-card {
+      flex: unset;
+      max-width: 150px; 
+      min-width: 90px;
+      padding: 25px 8px 8px 8px;
+      height: 250px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    #archivos-por-area {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    #archivos-por-area li {
+      display: flex;
+      align-items: center;
+      font-size: 1.04em;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .area-icon {
+      font-size: 1.2em;
+      color: #9F2241;
+      margin-right: 4px;
+    }
+    #archivos-mas-descargados {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    #archivos-mas-descargados li {
+      font-size: 1.04em;
+      margin-bottom: 10px;
+      text-align: left;
+      padding-left: 0;
+      position: static;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #archivos-mas-descargados li:before {
+      content: none !important;
+    }
+    .file-icon {
+      color: #9F2241;
+      font-size: 1.1em;
+      margin-right: 8px;
+      margin-left: 0;
+    }
+    .descargas-bold {
+      color: #9F2241;
+      font-weight: bold;
+      margin-left: 4px;
+    }
+    #total-descargas {
+      font-size: 2.6em;
+      font-weight: bold;
+      color: #9F2241;
+      margin: 15px 0 0 0;
+      letter-spacing: 1px;
+    }
+    canvas {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    @media (max-width: 768px) {
+      .cards { flex-direction: column; }
+      header { flex-direction: column; text-align: center; }
+      header h1 { font-size: 18px; }
+      .card.small-card { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="../Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+    <h1>Dashboard de Administración Municipal Chapulhuacán</h1>
+  </header>
+  <main>
+    <h2>Estadísticas Generales</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>Archivos por Área</h3>
+        <ul id="archivos-por-area"></ul>
+      </div>
+      <div class="card">
+        <h3>Archivos Más Descargados</h3>
+        <ul id="archivos-mas-descargados"></ul>
+      </div>
+      <div class="card small-card">
+        <h3>Descargas Totales</h3>
+        <p id="total-descargas"></p>
+      </div>
+    </div>
+    <h2>Descargas Mensuales</h2>
+    <canvas id="downloadsChart" height="150"></canvas>
+  </main>
+  <script>
+  // Cambia la ruta según tu estructura de proyecto
+  const DASHBOARD_API_URL = "../Controllers/DashboardController.php";
+
+  async function cargarDashboard() {
+    try {
+      const res = await fetch(DASHBOARD_API_URL);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+
+      // Archivos por área 
+      const areaUl = document.getElementById('archivos-por-area');
+      areaUl.innerHTML = '';
+      (Array.isArray(data.porArea) ? data.porArea : []).forEach(a => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="area-icon">📁</span> ${a.area}: <b>${a.total} archivo(s)</b>`;
+        areaUl.appendChild(li);
+      });
+
+      // Archivos más descargados (SIN opción de descargar)
+      const masDescUl = document.getElementById('archivos-mas-descargados');
+      masDescUl.innerHTML = '';
+      (Array.isArray(data.masDescargados) ? data.masDescargados : [])
+        .filter(doc => Number(doc.descargas) > 0)
+        .forEach(doc => {
+          const li = document.createElement('li');
+          // Solo mostrar título y número de descargas, SIN enlace de descarga
+          li.innerHTML = `<span class="file-icon">📄</span> ${doc.titulo}: <span class="descargas-bold">${doc.descargas} descargas</span>`;
+          masDescUl.appendChild(li);
+        });
+
+      // Descargas totales 
+      document.getElementById('total-descargas').textContent = data.totalDescargas || 0;
+
+      // Gráfica de descargas mensuales
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const descargasMensuales = data.descargasMensuales || {};
+      // Asegura que los valores estén alineados del mes 1 al 12
+      const valores = [];
+      for(let i=1; i<=12; i++) {
+        valores.push(Number(descargasMensuales[i] || 0));
+      }
+
+      const ctx = document.getElementById('downloadsChart').getContext('2d');
+      // Si ya existe la gráfica, actualízala
+      if (window.downloadsChartInstance) {
+        window.downloadsChartInstance.data.labels = meses;
+        window.downloadsChartInstance.data.datasets[0].data = valores;
+        window.downloadsChartInstance.update();
+      } else {
+        window.downloadsChartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: meses,
+            datasets: [{
+              label: 'Descargas por mes',
+              data: valores,
+              backgroundColor: '#9F2241'
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: { 
+                beginAtZero: true,
+                stepSize: 1,
+                title: { display: true, text: 'Cantidad de descargas' }
+              }
+            },
+            plugins: {
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `Descargas: ${context.parsed.y}`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      document.querySelector('main').innerHTML = `
+        <h2 style="color:red;text-align:center;">No se pudo cargar el dashboard. ${e.message}</h2>
+        <p style="text-align:center;">Verifica tu conexión con el servidor y que la base de datos tenga datos.</p>
+      `;
+    }
+  }
+  window.onload = cargarDashboard;
+  </script>
+</body>
+</html>

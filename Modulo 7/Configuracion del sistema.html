@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Configuración del Sistema</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f4f4f4;
+    }
+
+    header {
+      background-color: #9F2241;
+      color: white;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      gap: 250px;
+    }
+
+    header img {
+      height: 70px;
+      margin-left: 60px;
+    }
+
+    header h1 {
+      font-size: 30px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 590px;
+      margin: 2em auto;
+      background-color: white;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #9F2241;
+      margin-bottom: 1em;
+    }
+
+    .section {
+      margin-bottom: 1.5em;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      align-items: center;
+      gap: 0.5em 1em;
+      margin-bottom: 1em;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9em;
+      width: 160px;
+      text-align: right;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.5em;
+      border: 2px solid #9F2241;
+      border-radius: 6px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+
+    input[type="color"] {
+      width: 100px;
+      padding: 0;
+    }
+
+    .form-button {
+      width: 200px;
+      background-color: #9F2241;
+      color: white;
+      padding: 0.6em 1em;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-left: 200px;
+      margin-top: 5px;
+      display: block;
+    }
+
+    .form-button:hover {
+      background-color: #7D1935;
+    }
+
+    .preview-logo {
+      max-height: 80px;
+      margin-top: 10px;
+      margin-left: 160px;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .container {
+        padding: 1em;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        text-align: left;
+      }
+
+      label, .form-button, .preview-logo {
+        margin-left: 0;
+        text-align: left;
+      }
+
+      .form-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+      <img src="../../CHAPULHUACAN/Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+    <h1>Configuración del Sistema</h1>
+  </header>
+
+  <div class="container">
+    <div class="section">
+      <h2>Gestión de usuarios y roles</h2>
+      <div class="form-grid">
+        <label for="username">Nombre del usuario</label>
+        <input type="text" id="username" placeholder="">
+        <label for="userRole">Rol</label>
+        <select id="userRole">
+          <option value="admin">Administrador</option>
+          <option value="editor">Editor</option>
+          <option value="lector">Lector</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Tipos de documentos y áreas activas</h2>
+      <div class="form-grid">
+        <label for="docType">Tipo de documento</label>
+        <input type="text" id="docType" placeholder="">
+        <label for="areaActiva">Área activa</label>
+        <input type="text" id="areaActiva" placeholder="">
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Formatos y tamaño máximo por archivo</h2>
+      <div class="form-grid">
+        <label for="formatosPermitidos">Formatos permitidos</label>
+        <input type="number" id="formatosPermitidos" placeholder="">
+        <label for="maxFileSize">Tamaño máximo (MB)</label>
+        <input type="number" id="maxFileSize" min="1" placeholder="">
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Personalización</h2>
+      <div class="form-grid">
+        <label for="logoInput">Subir logotipo</label>
+        <input type="file" id="logoInput" accept="image/*" onchange="previewLogo()">
+        <label for="customText">Texto personalizado</label>
+        <input type="text" id="customText" placeholder="">
+      </div>
+      <img id="logoPreview" class="preview-logo" />
+    </div>
+
+    <button class="form-button" onclick="guardarTodo()">Guardar</button>
+  </div>
+
+  <script>
+    function guardarTodo() {
+      const username = document.getElementById('username').value;
+      const role = document.getElementById('userRole').value;
+      const tipo = document.getElementById('docType').value;
+      const area = document.getElementById('areaActiva').value;
+      const formatos = document.getElementById('formatosPermitidos').value;
+      const tamaño = document.getElementById('maxFileSize').value;
+      const texto = document.getElementById('customText').value;
+
+      alert(
+        `Configuración guardada:\n\n` +
+        `👤 Usuario: ${username}\n🧑‍💼 Rol: ${role}\n` +
+        `📄 Tipo de documento: ${tipo}\n🏢 Área activa: ${area}\n` +
+        `📁 Formatos permitidos: ${formatos}\n📦 Tamaño máximo: ${tamaño} MB\n` +
+        `📝 Texto personalizado: ${texto}`
+      );
+    }
+
+    function previewLogo() {
+      const input = document.getElementById('logoInput');
+      const preview = document.getElementById('logoPreview');
+
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script>
+
+</body>
+</html>

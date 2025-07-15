@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carga de Documentos Oficiales</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #9F2241;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-size: 14px; 
+    }
+
+    .wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 30px;
+    }
+
+    .form-container {
+      background-color: white;
+      padding: 25px; 
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.25);
+      width: 400px; 
+    }
+
+    h2 {
+      text-align: center;
+      color: #9F2241;
+      margin-bottom: 0.75em; 
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 15px; 
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 7px 8px; 
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+      font-size: 0.9em; 
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #7D1935;
+      box-shadow: 0 0 8px #7D1935;
+    }
+
+    textarea {
+      resize: vertical;
+      height: 100px;
+    }
+
+    .full-width {
+      grid-column: span 2;
+    }
+
+    .error {
+      color: red;
+      grid-column: span 2;
+    }
+
+    button[type="submit"] {
+      background-color: #7D1935;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9em;
+      padding: 8px 15px; 
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      grid-column: span 2;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #5E0F2F;
+    }
+
+ .Logo img {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  .Logo img {
+      max-height: 270px;
+      width: auto;
+    }
+
+    @media (max-width: 1024px) {
+      .wrapper {
+        flex-direction: column;
+      }
+
+      .form-container {
+        width: 90vw;
+        margin-right: 0;
+      }
+
+      .Logo img {
+        max-height: 200px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+
+      .full-width,
+      button[type="submit"] {
+        grid-column: span 1;
+      }
+
+      .custom-file-upload button {
+        background-color: #7D1935;
+        color: white;
+        font-weight: bold;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 0.9em;
+      }
+
+      .custom-file-upload button:hover {
+        background-color: #5E0F2F;
+      }
+    }
+
+    
+    #listaArchivos {
+      margin-top: 10px;
+      padding-left: 20px;
+      max-height: 90px; 
+      overflow-y: auto;
+      border: 1px solid #9F2241;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      font-size: 0.85em;
+    }
+
+    #listaArchivos li {
+      color: #000000;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carga de Documentos Oficiales</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #9F2241;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-size: 14px; 
+    }
+    .wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 30px;
+    }
+    .form-container {
+      background-color: white;
+      padding: 25px; 
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.25);
+      width: 400px; 
+    }
+    h2 {
+      text-align: center;
+      color: #9F2241;
+      margin-bottom: 0.75em; 
+    }
+    form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 15px; 
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: block;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 7px 8px; 
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+      font-size: 0.9em; 
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #7D1935;
+      box-shadow: 0 0 8px #7D1935;
+    }
+    textarea {
+      resize: vertical;
+      height: 100px;
+    }
+    .full-width {
+      grid-column: span 2;
+    }
+    .error {
+      color: red;
+      grid-column: span 2;
+    }
+    button[type="submit"] {
+      background-color: #7D1935;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9em;
+      padding: 8px 15px; 
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      grid-column: span 2;
+    }
+    button[type="submit"]:hover {
+      background-color: #5E0F2F;
+    }
+    .Logo img {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .Logo img {
+      max-height: 270px;
+      width: auto;
+    }
+    @media (max-width: 1024px) {
+      .wrapper {
+        flex-direction: column;
+      }
+      .form-container {
+        width: 90vw;
+        margin-right: 0;
+      }
+      .Logo img {
+        max-height: 200px;
+      }
+    }
+    @media (max-width: 600px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+      .full-width,
+      button[type="submit"] {
+        grid-column: span 1;
+      }
+      .custom-file-upload button {
+        background-color: #7D1935;
+        color: white;
+        font-weight: bold;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-size: 0.9em;
+      }
+      .custom-file-upload button:hover {
+        background-color: #5E0F2F;
+      }
+    }
+    #listaArchivos {
+      margin-top: 10px;
+      padding-left: 20px;
+      max-height: 90px; 
+      overflow-y: auto;
+      border: 1px solid #9F2241;
+      border-radius: 8px;
+      background-color: #f9f9f9;
+      font-size: 0.85em;
+    }
+    #listaArchivos li {
+      color: #000000;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="form-container">
+    <h2>Carga de Documentos Oficiales</h2>
+    <form id="uploadForm" action="../Controllers/cargadocController.php" method="POST" enctype="multipart/form-data">
+      <div>
+        <label for="titulo">Título del documento:</label>
+        <input type="text" id="titulo" name="titulo" required />
+      </div>
+      <div>
+        <label for="tipo">Tipo de documento:</label>
+        <select id="tipo" name="tipo" required>
+          <option value="">--Selecciona--</option>
+          <option value="Acta">Acta</option>
+          <option value="Reglamento">Reglamento</option>
+          <option value="Informe">Informe</option>
+          <option value="Convocatoria">Convocatoria</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div>
+        <label for="area">Área responsable:</label> 
+        <select id="area" name="area" required>
+          <option value="">--Selecciona--</option>
+          <option value="Tesorería">Tesorería</option>
+          <option value="Obras Públicas">Obras Públicas</option>
+          <option value="DIF">DIF</option>
+          <option value="Otra">Otra</option>
+        </select>
+      </div>
+      <div>
+        <label for="fecha">Fecha de publicación:</label>
+        <input type="date" id="fecha" name="fecha" required />
+      </div>
+      <div>
+        <label for="categoria">Categoría:</label>
+        <select id="categoria" name="categoria" required>
+          <option value="">--Selecciona--</option>
+          <option value="Transparencia">Transparencia</option>
+          <option value="Convocatoria">Convocatoria</option>
+          <option value="Normatividad">Normatividad</option>
+          <option value="Otra">Otra</option>
+        </select>
+      </div>
+      <div class="full-width">
+        <label for="descripcion">Descripción corta:</label>
+        <textarea id="descripcion" name="descripcion" required></textarea>
+      </div>
+      <div>
+        <label for="subcarpeta">Subcarpeta de destino:</label>
+        <select id="subcarpeta" name="subcarpeta" required onchange="mostrarInputPersonalizado(this.value)">
+          <option value="">--Selecciona--</option>
+          <!-- Las carpetas se llenan dinámicamente -->
+          <option value="Otra">Otra (personalizada)</option>
+        </select>
+        <input style="display:none;margin-top:5px;" type="text" id="subcarpetaPersonalizada" name="subcarpetaPersonalizada" placeholder="Nombre de subcarpeta" />
+      </div>
+      <div class="full-width">
+        <label for="archivos">Selecciona archivos (PDF, DOCX, XLS, JPG):</label>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <label class="custom-file-upload" style="display: inline-block;">
+            <input type="file" id="archivos" name="archivos[]" multiple required hidden />
+            <button type="button" onclick="document.getElementById('archivos').click()">Elegir archivos</button>
+          </label>
+          <ul id="listaArchivos" aria-live="polite" aria-relevant="additions removals">
+            <li>Sin archivos seleccionados</li>
+          </ul>
+        </div>
+      </div>
+      <div class="error" id="errorMsg"></div>
+      <button type="submit">Subir Documentos</button>
+    </form>
+    <div id="responseMsg"></div>
+  </div>
+  <div class="logo-fuera">
+      <img src="../../CHAPULHUACAN/Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+  </div>
+</div>
+<script>
+  const allowedExtensions = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'];
+  const form = document.getElementById('uploadForm');
+  const archivosInput = document.getElementById('archivos');
+  const listaArchivos = document.getElementById('listaArchivos');
+  const errorMsg = document.getElementById('errorMsg');
+  const responseMsg = document.getElementById('responseMsg');
+  const subcarpetaSelect = document.getElementById('subcarpeta');
+
+  archivosInput.addEventListener('change', () => {
+    const files = Array.from(archivosInput.files);
+    listaArchivos.innerHTML = '';
+    if (files.length === 0) {
+      listaArchivos.innerHTML = '<li>Sin archivos seleccionados</li>';
+      return;
+    }
+    files.forEach(file => {
+      const li = document.createElement('li');
+      li.textContent = file.name;
+      listaArchivos.appendChild(li);
+    });
+  });
+
+  form.addEventListener('submit', function(event) {
+    errorMsg.textContent = '';
+    const files = archivosInput.files;
+    for (let file of files) {
+      const extension = file.name.split('.').pop().toLowerCase();
+      if (!allowedExtensions.includes(extension)) {
+        errorMsg.textContent = `El archivo "${file.name}" tiene un formato no permitido.`;
+        event.preventDefault();
+        return;
+      }
+    }
+    // AJAX
+    event.preventDefault();
+    let formData = new FormData(form);
+    fetch(form.action, {
+      method: 'POST',
+      body: formData
+    })
+    .then(response => response.json())
+    .then(result => {
+      responseMsg.textContent = result.text;
+      if(result.icon === 'success') {
+        form.reset();
+        listaArchivos.innerHTML = '<li>Sin archivos seleccionados</li>';
+        cargarCarpetas();
+      }
+    })
+    .catch(error => {
+      responseMsg.textContent = 'Error en la carga. Intenta de nuevo.';
+    });
+  });
+
+  function mostrarInputPersonalizado(valor) {
+    var input = document.getElementById('subcarpetaPersonalizada');
+    if (valor === 'Otra') {
+      input.style.display = 'block';
+      input.required = true;
+    } else {
+      input.style.display = 'none';
+      input.required = false;
+      input.value = '';
+    }
+  }
+
+  function cargarCarpetas() {
+    fetch('../Controllers/cargadocController.php')
+      .then(res => res.json())
+      .then(carpetas => {
+        // Guarda las opciones fijas (vacía y "Otra")
+        let fijas = Array.from(subcarpetaSelect.options).filter(opt => opt.value === "" || opt.value === "Otra");
+        // Limpia el select y vuelve a poner las fijas
+        subcarpetaSelect.innerHTML = '';
+        fijas.forEach(f => subcarpetaSelect.appendChild(f));
+        // Inserta las carpetas dinámicas antes de "Otra"
+        carpetas.forEach(carp => {
+          if (!fijas.some(f => f.value === carp)) {
+            let opt = document.createElement('option');
+            opt.value = carp;
+            opt.textContent = carp;
+            let otraOption = subcarpetaSelect.querySelector('option[value="Otra"]');
+            if (otraOption) {
+              subcarpetaSelect.insertBefore(opt, otraOption);
+            } else {
+              subcarpetaSelect.appendChild(opt);
+            }
+          }
+        });
+      });
+  }
+
+  // Llama a cargarCarpetas al cargar la página
+  document.addEventListener('DOMContentLoaded', cargarCarpetas);
+</script>
+</body>
+</html>

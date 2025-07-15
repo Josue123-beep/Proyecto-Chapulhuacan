@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      height: 100vh;
+      background-color: #9F2241;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #9F2241;
+      overflow: hidden;
+    }
+
+    .main-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 90vw;
+      max-width: 1100px;
+      gap: 150px;
+    }
+
+    .logo-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .logo {
+      max-width: 200%;
+      width: 700px;
+      height: auto;
+    }
+    .container {
+      flex: 1;
+      background-color: #fff;
+      padding: 2.5em 3em;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      max-width: 400px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-sizing: border-box;
+      color: #9F2241;
+    }
+
+    .welcome-large {
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 0.2em;
+    }
+
+    .welcome-small {
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: 1em;
+    }
+
+    input {
+      width: calc(100% - 2em);
+      padding: 0.7em 1em;
+      margin: 0.6em 0;
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 500;
+      color: #000;
+      box-sizing: border-box;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #7D1935;
+      box-shadow: 0 0 8px #7D1935;
+    }
+
+    button.login-btn {
+      background-color: #7D1935;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9em;
+      padding: 0.5em;
+      width: 70%;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 0.5em;
+    }
+
+    button.login-btn:hover {
+      background-color: #5E0F2F;
+    }
+
+    .small-actions {
+      margin-top: 1.5em;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .link-btn {
+      background-color: transparent;
+      border: none;
+      color: inherit;
+      font-size: 0.95em;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    #panel {
+      margin-top: 15px;
+      font-weight: 700;
+      min-height: 1.5em;
+      user-select: none;
+      color: #000;
+    }
+  </style>
+</head> 
+<body>
+
+  <div class="main-container">
+    <div class="logo-container">
+      <img src="../Chapulhuacan.png" alt="Logo" class="logo" />
+    </div>
+
+    <div class="container" role="main" aria-label="Formulario de inicio de sesión">
+      <div class="welcome-large">Bienvenido,</div>
+      <div class="welcome-small">por favor inicia sesión</div>
+
+      <input type="email" id="email" placeholder="Correo electrónico" aria-label="Correo electrónico" required />
+      <input type="password" id="password" placeholder="Contraseña" aria-label="Contraseña" required />
+
+      <button type="button" class="login-btn" onclick="login()">Iniciar sesión</button>
+
+      <div class="small-actions">
+        <button class="link-btn" onclick="window.location.href='../Recuperar contraseña/recuperar contraseña.html'">¿Olvidaste tu contraseña?</button>
+        <button class="link-btn" onclick="window.location.href='../Crear usuario/Crear usuario.html'">Crear usuario nuevo</button>
+      </div>
+
+      <div id="panel" role="alert" aria-live="polite"></div>
+    </div>
+  </div>
+
+<script>
+function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const panel = document.getElementById('panel');
+
+  if (!email || !password) {
+    panel.textContent = "Por favor, llena todos los campos.";
+    return;
+  }
+
+  fetch('../../Controllers/LoginController.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.icon === 'success') {
+      panel.textContent = data.text;
+               window.location.href = 'http://localhost/CHAPU/';
+    } else {
+      panel.textContent = data.text || "Error al iniciar sesión";
+    }
+  })
+  .catch(() => {
+    panel.textContent = "Error de conexión con el servidor";
+  });
+}
+</script>
+</body>
+</html>

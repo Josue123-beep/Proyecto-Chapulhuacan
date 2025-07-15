@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Documentos Oficiales</title>
+  <!-- Bootstrap Icons CDN para el botón de ver documento -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    header {
+      background-color: #9F2241;
+      color: white;
+      padding: 5px;
+      display: flex;
+      align-items: center;
+      gap: 150px;
+    }
+    header img {
+      height: 70px;
+      margin-left: 60px;
+    }
+    header h1 {
+      font-size: 30px;
+      margin: 0;
+    }
+    main {
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    input, select, button {
+      padding: 8px;
+      font-size: 14px;
+      border: 2px solid #9F2241;
+      border-radius: 8px;
+    }
+    input:focus, select:focus, button:focus {
+      outline: none;
+      border-color: #7D1935;
+      box-shadow: 0 0 8px #7D1935;
+    }
+    button {
+      cursor: pointer;
+      font-weight: bold;
+      background-color: #9F2241;
+      color: white;
+      border: none;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #7D1935;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #9F2241;
+      color: white;
+    }
+    th:last-child, td:last-child {
+      white-space: nowrap;
+      text-align: center;
+    }
+    td.fecha-col, th.fecha-col {
+      white-space: nowrap;
+      min-width: 106px;
+      max-width: 120px;
+      text-align: left;
+    }
+    button.delete, button.replace {
+      background-color: #7D1935;
+      color: white;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+      margin: 2px;
+    }
+    button.delete:hover, button.replace:hover {
+      background-color: #5E0F2F;
+    }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    .error {
+      text-align: center;
+      padding: 20px;
+      color: red;
+      background-color: #ffebee;
+      border: 1px solid #ffcdd2;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    #editModal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(34,26,34,0.65);
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s;
+    }
+    #editModal.active {
+      display: flex;
+    }
+    #editForm {
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(159,34,65,0.25);
+      padding: 28px 32px 22px 32px;
+      min-width: 320px;
+      max-width: 95vw;
+      width: 670px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8em;
+      animation: fadeInScale 0.3s;
+    }
+    #editForm .columns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    #editForm .col {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8em;
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.97);}
+      to   { opacity: 1; transform: scale(1);}
+    }
+    #editForm h2 {
+      margin: 0 0 10px 0;
+      color: #9F2241;
+      font-size: 1.35em;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: .02em;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .form-group label {
+      font-size: 0.98em;
+      color: #7D1935;
+      font-weight: 600;
+      margin-bottom: 1px;
+    }
+    .form-group input:not([type="file"]), 
+    .form-group select, 
+    .form-group textarea {
+      border: 1.5px solid #9F2241;
+      border-radius: 7px;
+      padding: 7px 9px;
+      font-size: 1em;
+      background: #faf5f7;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 1px;
+    }
+    .form-group input:not([type="file"]):focus, 
+    .form-group select:focus, 
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #7D1935;
+      background: #fff;
+      box-shadow: 0 0 6px #e6adc2;
+    }
+    .file-label {
+      font-style: italic;
+      color: #6e6570;
+      font-weight: 400;
+    }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .btn-save, .btn-cancel {
+      padding: 9px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-save {
+      background: #9F2241;
+      color: #fff;
+    }
+    .btn-save:hover {
+      background: #7D1935;
+    }
+    .btn-cancel {
+      background: #e5e5e5;
+      color: #7D1935;
+    }
+    .btn-cancel:hover {
+      background: #f7e5ea;
+      color: #9F2241;
+    }
+    /* Botón de ver documento */
+    .btn-view {
+      background-color: #7D1935;
+      color: white;
+      padding: 4px 6px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      margin: 1px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-view:hover {
+      background-color: #5E0F2F;
+    }
+    .btn-view i {
+      font-size: 14px;
+    }
+    @media (max-width: 900px) {
+      #editForm { width: 98vw; }
+      #editForm .columns { flex-direction: column; gap: 0; }
+    }
+    @media (max-width: 700px) {
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      header h1 {
+        font-size: 18px;
+      }
+      #editForm { padding: 13px 3vw 12px 3vw; }
+    }
+    @media (max-width: 500px) {
+      #editForm {
+        min-width: unset;
+        padding: 13px 3vw 12px 3vw;
+        width: 98vw;
+        gap: 0.5em;
+      }
+      #editForm h2 {
+        font-size: 1.09em;
+      }
+    }
+    tbody td {
+      background-color: #fff !important;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <img src="../Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+  <h1>Gestión de Documentos Oficiales Chapulhuacán</h1>
+</header>
+<main>
+  <div class="filters">
+    <input type="text" id="searchInput" placeholder="Buscar por título..." />
+    <input type="date" id="dateFilter" />
+    <select id="typeFilter">
+      <option value="">Todos los tipos</option>
+      <option value="Acta">Acta</option>
+      <option value="Reglamento">Reglamento</option>
+      <option value="Informe">Informe</option>
+      <option value="Convocatoria">Convocatoria</option>
+      <option value="Solicitud">Solicitud</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <select id="areaFilter">
+      <option value="">Todas las áreas</option>
+      <option value="Tesorería">Tesorería</option>
+      <option value="Obras Públicas">Obras Públicas</option>
+      <option value="DIF">DIF</option>
+      <option value="Otra">Otra</option>
+    </select>
+    <select id="categoriaFilter">
+      <option value="">Todas las categorías</option>
+      <option value="Transparencia">Transparencia</option>
+      <option value="Convocatoria">Convocatoria</option>
+      <option value="Normatividad">Normatividad</option>
+      <option value="Otra">Otra</option>
+    </select>
+    <button id="searchButton">Buscar</button>
+    <button id="clearButton">Limpiar</button>
+  </div>
+  <div id="status"></div>
+  <table id="documentTable">
+    <thead>
+      <tr>
+        <th>Título</th>
+        <th>Tipo</th>
+        <th>Área</th>
+        <th>Categoría</th>
+        <th class="fecha-col">Fecha</th>
+        <th>Descripción</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="7" class="loading">Cargando documentos...</td></tr>
+    </tbody>
+  </table>
+</main>
+
+<div id="editModal">
+  <form id="editForm" enctype="multipart/form-data">
+    <h2>Editar Registro</h2>
+    <div class="columns">
+      <div class="col">
+        <div class="form-group">
+          <label for="editTitulo">Título</label>
+          <input type="text" name="titulo" id="editTitulo" required>
+        </div>
+        <div class="form-group">
+          <label for="editTipo">Tipo</label>
+          <select name="tipo" id="editTipo" required>
+            <option value="">Selecciona un tipo</option>
+            <option value="Acta">Acta</option>
+            <option value="Reglamento">Reglamento</option>
+            <option value="Informe">Informe</option>
+            <option value="Convocatoria">Convocatoria</option>
+            <option value="Solicitud">Solicitud</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editArea">Área</label>
+          <select name="area" id="editArea" required>
+            <option value="">Selecciona un área</option>
+            <option value="Tesorería">Tesorería</option>
+            <option value="Obras Públicas">Obras Públicas</option>
+            <option value="DIF">DIF</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editCategoria">Categoría</label>
+          <select name="Categoria" id="editCategoria" required>
+            <option value="">Selecciona una categoría</option>
+            <option value="Transparencia">Transparencia</option>
+            <option value="Convocatoria">Convocatoria</option>
+            <option value="Normatividad">Normatividad</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="editSubcarpeta">Subcarpeta de destino</label>
+          <select id="editSubcarpeta" name="subcarpeta" required onchange="mostrarEditInputPersonalizado(this.value)">
+            <option value="">--Selecciona--</option>
+            <!-- Se llenará dinámicamente -->
+            <option value="Otra">Otra (personalizada)</option>
+          </select>
+          <input style="display:none;margin-top:5px;" 
+                 type="text" id="editSubcarpetaPersonalizada" 
+                 name="subcarpetaPersonalizada" 
+                 placeholder="Nombre de subcarpeta" />
+        </div>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label for="editFecha">Fecha</label>
+          <input type="date" name="fecha" id="editFecha">
+        </div>
+        <div class="form-group">
+          <label for="editDescripcion">Descripción</label>
+          <textarea name="descripcion" id="editDescripcion" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="editArchivo" class="file-label">Archivo (opcional, deja vacío para no cambiar)</label>
+          <input type="file" name="archivo" id="editArchivo" />
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn-save">Guardar</button>
+      <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    </div>
+    <input type="hidden" name="id" id="editId">
+  </form>
+</div>
+
+<script>
+function mostrarEditInputPersonalizado(valor) {
+  var input = document.getElementById('editSubcarpetaPersonalizada');
+  if (valor === 'Otra') {
+    input.style.display = 'block';
+    input.required = true;
+  } else {
+    input.style.display = 'none';
+    input.required = false;
+    input.value = '';
+  }
+}
+
+function cargarEditCarpetas(selectedValue = '', personalizada = '') {
+  const select = document.getElementById('editSubcarpeta');
+  fetch('../Controllers/cargadocController.php')
+    .then(res => res.json())
+    .then(carpetas => {
+      // Opciones fijas (vacía y "Otra")
+      let fijas = Array.from(select.options).filter(opt => opt.value === "" || opt.value === "Otra");
+      select.innerHTML = '';
+      fijas.forEach(f => select.appendChild(f));
+      // Insertar carpetas antes de "Otra"
+      carpetas.forEach(carp => {
+        if (!fijas.some(f => f.value === carp)) {
+          let opt = document.createElement('option');
+          opt.value = carp;
+          opt.textContent = carp;
+          let otraOption = select.querySelector('option[value="Otra"]');
+          if (otraOption) {
+            select.insertBefore(opt, otraOption);
+          } else {
+            select.appendChild(opt);
+          }
+        }
+      });
+      // Selección automática si es edición
+      if (selectedValue === 'Otra') {
+        select.value = 'Otra';
+        mostrarEditInputPersonalizado('Otra');
+        document.getElementById('editSubcarpetaPersonalizada').value = personalizada || '';
+      } else if (selectedValue) {
+        select.value = selectedValue;
+        mostrarEditInputPersonalizado(selectedValue);
+      } else {
+        select.value = '';
+        mostrarEditInputPersonalizado('');
+      }
+    });
+}
+
+function openEditModal(id) {
+  const doc = (window.documents || []).find(d => d.id == id);
+  if (!doc) return;
+  document.getElementById("editId").value = doc.id;
+  document.getElementById("editTitulo").value = doc.titulo || '';
+  document.getElementById("editTipo").value = doc.tipo || '';
+  document.getElementById("editArea").value = doc.area || '';
+  document.getElementById("editCategoria").value = doc.Categoria || '';
+  document.getElementById("editFecha").value = doc.fecha || '';
+  document.getElementById("editDescripcion").value = doc.descripcion || '';
+  document.getElementById("editArchivo").value = '';
+  // Subcarpeta
+  let subcarpeta = doc.subcarpeta || '';
+  let subcarpetaPersonalizada = doc.subcarpetaPersonalizada || '';
+  cargarEditCarpetas(subcarpeta, subcarpetaPersonalizada);
+  document.getElementById("editModal").classList.add('active');
+}
+function closeModal() {
+  document.getElementById("editModal").classList.remove('active');
+}
+document.getElementById("editForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const form = e.target;
+  const formData = new FormData(form);
+  formData.append('action', 'edit');
+  try {
+    const res = await fetch('../Controllers/gestiondocController.php', {
+      method: 'POST',
+      body: formData
+    });
+    const r = await res.json();
+    if (r.success) {
+      closeModal();
+      loadDocuments();
+    } else {
+      alert('Error al editar: ' + (r.message || ''));
+    }
+  } catch (err) {
+    alert('Error de comunicación');
+  }
+});
+async function loadDocuments() {
+  const status = document.getElementById('status');
+  const tbody = document.querySelector("#documentTable tbody");
+  status.innerHTML = '<div class="loading">Cargando documentos...</div>';
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">Cargando...</td></tr>';
+  const titulo = document.getElementById("searchInput").value.trim();
+  const tipo = document.getElementById("typeFilter").value;
+  const area = document.getElementById("areaFilter").value;
+  const fecha = document.getElementById("dateFilter").value;
+  const categoria = document.getElementById("categoriaFilter").value;
+  const params = new URLSearchParams();
+  if (titulo) params.append('titulo', titulo);
+  if (tipo) params.append('tipo', tipo);
+  if (area) params.append('area', area);
+  if (fecha) params.append('fecha', fecha);
+  if (categoria) params.append('Categoria', categoria);
+  const url = '../Controllers/gestiondocController.php' + (params.toString() ? '?' + params.toString() : '');
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const responseText = await res.text();
+    let docs;
+    try { docs = JSON.parse(responseText); } 
+    catch (parseError) { throw new Error('Respuesta inválida del servidor: ' + responseText); }
+    if (docs.error) throw new Error(docs.error);
+    window.documents = docs;
+    renderDocuments();
+    status.innerHTML = '';
+  } catch (error) {
+    status.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: red;">Error al cargar documentos: ${error.message}</td></tr>`;
+  }
+}
+function renderDocuments() {
+  const docs = window.documents || [];
+  const tbody = document.querySelector("#documentTable tbody");
+  tbody.innerHTML = ""; 
+  if (docs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No se encontraron documentos.</td></tr>';
+    return;
+  }
+  for (const doc of docs) {
+    // Ajusta el campo doc.archivo si tu backend usa otro nombre para la ruta del archivo
+    const archivoUrl = doc.archivo ? doc.archivo : '';
+    const btnVer = `<button class="btn-view" onclick="verDocumento('${archivoUrl}')" title="Ver documento"><i class="bi bi-eye-fill"></i></button>`;
+    let row = document.createElement('tr');
+    row.setAttribute('data-document-id', doc.id);
+    row.innerHTML = `
+      <td>${doc.titulo || ''}</td>
+      <td>${doc.tipo || ''}</td>
+      <td>${doc.area || ''}</td>
+      <td>${doc.Categoria || ''}</td>
+      <td class="fecha-col">${doc.fecha || ''}</td>
+      <td>${doc.descripcion || ''}</td>
+      <td>
+        <button class="replace" onclick="openEditModal(${doc.id})">Editar</button>
+        <button class="delete" onclick="deleteDocument(${doc.id})">Eliminar</button>
+        ${btnVer}
+      </td>
+    `;
+    tbody.appendChild(row);
+  }
+}
+
+function verDocumento(url) {
+  window.open(url, '_blank');
+}
+
+async function deleteDocument(id) {
+  if (!confirm('¿Eliminar este documento?')) return;
+  const payload = new URLSearchParams();
+  payload.append('action', 'delete');
+  payload.append('id', id);
+  try {
+    const res = await fetch('../Controllers/gestiondocController.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: payload.toString()
+    });
+    const result = await res.json();
+    if (result.success) {
+      loadDocuments();
+    } else {
+      alert('Error al eliminar');
+    }
+  } catch {
+    alert('Error de comunicación');
+  }
+}
+document.getElementById("searchButton").addEventListener("click", loadDocuments);
+document.getElementById("clearButton").addEventListener("click", function(){
+  document.getElementById("searchInput").value = '';
+  document.getElementById("typeFilter").value = '';
+  document.getElementById("areaFilter").value = '';
+  document.getElementById("dateFilter").value = '';
+  document.getElementById("categoriaFilter").value = '';
+  loadDocuments();
+});
+document.getElementById("typeFilter").addEventListener("change", loadDocuments);
+document.getElementById("areaFilter").addEventListener("change", loadDocuments);
+document.getElementById("dateFilter").addEventListener("change", loadDocuments);
+document.getElementById("categoriaFilter").addEventListener("change", loadDocuments);
+document.getElementById("searchInput").addEventListener("keypress", function(e) {
+  if (e.key === 'Enter') loadDocuments();
+});
+document.addEventListener('DOMContentLoaded', loadDocuments);
+</script>
+</body>
+</html>
