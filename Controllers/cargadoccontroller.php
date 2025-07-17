@@ -1,11 +1,16 @@
 <?php
+// ¡NO PONGAS ESPACIOS NI LÍNEAS EN BLANCO ANTES DE ESTA LÍNEA!
+
+// Forzar salida estrictamente como JSON
+header('Content-Type: application/json');
+
+// Reporte de errores sólo para desarrollo (puedes desactivarlo en producción)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Si es GET, respondemos con las carpetas disponibles en uploads/
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    header('Content-Type: application/json');
     $baseDir = realpath(__DIR__ . '/../uploads');
     $carpetas = [];
     if ($baseDir && is_dir($baseDir)) {
@@ -23,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 require_once __DIR__ . '/../Server/DataBase/Querys/cargadocQuerys.php';
+require_once __DIR__ . '/../Server/DataBase/Conexion.php';
 
 class CargaDocController {
     private ?string $titulo;
@@ -48,12 +54,25 @@ class CargaDocController {
     }
 
     public function cargar() {
+        // Iniciar sesión antes de cualquier output
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['icon' => 'error', 'text' => 'Método no permitido']);
             return;
         }
 
         $docQuery = new CargaDocQuerys();
+        $conexion = Conexion::obtenerConexion();
+
+        // Obtener ID usuario desde sesión
+        $id_usuario = $_SESSION['id_usuario'] ?? null;
+        if (!$id_usuario) {
+            echo json_encode(['icon' => 'error', 'text' => 'Sesión de usuario no encontrada']);
+            return;
+        }
 
         if (
             !$this->titulo || !$this->tipo || !$this->area ||
@@ -65,16 +84,15 @@ class CargaDocController {
         }
 
         // Determinar subcarpeta final
-        $subcarpetaFinal = '';
-        if ($this->subcarpeta === 'Otra') {
-            $subcarpetaFinal = trim($this->subcarpetaPersonalizada);
-            if (!$subcarpetaFinal) {
-                echo json_encode(['icon' => 'warning', 'text' => 'Debes indicar el nombre de la subcarpeta personalizada.']);
-                return;
-            }
-        } else {
-            $subcarpetaFinal = $this->subcarpeta;
+        $subcarpetaFinal = ($this->subcarpeta === 'Otra')
+            ? trim($this->subcarpetaPersonalizada)
+            : $this->subcarpeta;
+
+        if (!$subcarpetaFinal) {
+            echo json_encode(['icon' => 'warning', 'text' => 'Debes indicar el nombre de la subcarpeta personalizada.']);
+            return;
         }
+
         $subcarpetaFinal = preg_replace('/[^A-Za-z0-9 _-]/', '', $subcarpetaFinal);
 
         $permitidos = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'];
@@ -124,17 +142,47 @@ class CargaDocController {
             // Guardar la ruta relativa: subcarpeta/nombreFinal
             $archivoRutaRelativa = $subcarpetaFinal . "/" . $nombreFinal;
 
+            // GUARDAR DOCUMENTO EN BD
             $guardado = $docQuery->guardarDocumento(
                 $this->titulo,
                 $this->tipo,
                 $this->area,
                 $this->fecha,
                 $this->descripcion,
-                $nombreFinal,   // El nombre final que puede tener (1), (2), etc
+                $nombreFinal,
                 $archivoRutaRelativa,
-                $this->categoria
+                $this->categoria,
+                $id_usuario // debe guardarse en tb_carga_doc
             );
-            if (!$guardado) {
+
+            if ($guardado) {
+                // Recuperar el último ID insertado en tb_carga_doc
+                $archivo_id = $docQuery->obtenerUltimoIdDocumento();
+
+                // 1. Obtener datos del usuario
+                $stmt = $conexion->prepare("SELECT nombre, apellidos FROM tb_crear_usuario WHERE id = ?");
+                $stmt->bind_param("i", $id_usuario);
+                $stmt->execute();
+                $stmt->bind_result($usuario_nombre, $usuario_apellidos);
+                $stmt->fetch();
+                $stmt->close();
+
+                // 2. Obtener datos del archivo recién insertado
+                $stmt = $conexion->prepare("SELECT archivo_nombre, archivo_ruta, area, fecha FROM tb_carga_doc WHERE id = ?");
+                $stmt->bind_param("i", $archivo_id);
+                $stmt->execute();
+                $stmt->bind_result($archivo_nombre, $archivo_ruta, $area, $fecha);
+                $stmt->fetch();
+                $stmt->close();
+
+                // 3. Insertar en tb_historial
+                $accion = "Subió";
+                $descripcion_historial = "Carga de archivo";
+                $stmt = $conexion->prepare("INSERT INTO tb_historial (id_usuario, usuario_nombre, usuario_apellidos, accion, archivo_id, archivo_nombre, archivo_ruta, area, fecha, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->bind_param("isssisssss", $id_usuario, $usuario_nombre, $usuario_apellidos, $accion, $archivo_id, $archivo_nombre, $archivo_ruta, $area, $fecha, $descripcion_historial);
+                $stmt->execute();
+                $stmt->close();
+            } else {
                 echo json_encode(['icon' => 'error', 'text' => 'Error al guardar en la BD']);
                 return;
             }
@@ -154,4 +202,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new CargaDocController();
     $controller->cargar();
 }
-?>
+
+// ¡NO PONGAS NADA DESPUÉS DE ESTA LÍNEA! Ni ?> ni espacios.

@@ -9,7 +9,16 @@ class HistAuditQuerys {
     }
 
     public function obtenerRegistros($area = null, $fecha = null) {
-        $query = "SELECT usuario, accion, archivo, area, fecha, hora FROM historial_auditoria WHERE 1=1";
+        $query = "SELECT 
+                    usuario_nombre,
+                    usuario_apellidos,
+                    accion,
+                    archivo_nombre AS archivo,
+                    area,
+                    fecha,
+                    archivo_ruta
+                  FROM tb_historial
+                  WHERE 1=1";
         $params = [];
         $types = "";
 
@@ -18,21 +27,17 @@ class HistAuditQuerys {
             $params[] = $area;
             $types .= "s";
         }
-
         if ($fecha) {
-            $query .= " AND fecha = ?";
+            $query .= " AND DATE(fecha) = ?";
             $params[] = $fecha;
             $types .= "s";
         }
-
-        $query .= " ORDER BY fecha DESC, hora DESC";
+        $query .= " ORDER BY fecha DESC";
 
         $stmt = $this->conexion->prepare($query);
-
         if ($params) {
             $stmt->bind_param($types, ...$params);
         }
-
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -40,7 +45,6 @@ class HistAuditQuerys {
         while ($row = $result->fetch_assoc()) {
             $registros[] = $row;
         }
-
         $stmt->close();
         return $registros;
     }

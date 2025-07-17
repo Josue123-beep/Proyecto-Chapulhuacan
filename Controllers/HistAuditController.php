@@ -15,10 +15,8 @@ class HistAuditController {
             echo json_encode(['error' => 'Método no permitido']);
             return;
         }
-        
         $querys = new HistAuditQuerys();
         $registros = $querys->obtenerRegistros($this->area, $this->fecha);
-
         echo json_encode(['registros' => $registros]);
     }
 }

@@ -10,7 +10,6 @@
       font-family: 'Montserrat', sans-serif;
       background-color: #f4f4f4;
     }
-
     header {
       background-color: #9F2241;
       color: white;
@@ -19,22 +18,15 @@
       align-items: center;
       gap: 350px;
     }
-
     header img {
       height: 70px;
       margin-left: 60px;
     }
-
-       header h1 {
+    header h1 {
       font-size: 30px;
       margin: 0;
       font-weight: 700;
     }
-    .titulo {
-      font-size: 1.8em;
-      font-weight: bold;
-    }
-
     .filtros {
       display: flex;
       gap: 1em;
@@ -44,7 +36,6 @@
       max-width: 1000px;
       flex-wrap: wrap;
     }
-
     select, input[type="date"] {
       padding: 0.5em;
       border: 2px solid #9F2241;
@@ -52,7 +43,6 @@
       font-size: 1em;
       width: 200px;
     }
-
     button.buscar-btn {
       background-color: #9F2241;
       color: white;
@@ -62,31 +52,26 @@
       cursor: pointer;
       font-weight: bold;
     }
-
     .tabla-container {
       max-width: 1000px;
       margin: auto;
       overflow-x: auto;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       background-color: white;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-
     th, td {
       padding: 0.8em;
       text-align: left;
       border-bottom: 1px solid #ddd;
     }
-
     th {
       background-color: #9F2241;
       color: white;
     }
-
     td button {
       padding: 0.4em 1em;
       border: none;
@@ -94,18 +79,22 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     .ver-btn {
       background-color: #5E0F2F;
       color: white;
       margin-right: 3px;
     }
-
     .descargar-btn {
       background-color: #7D1935;
       color: white;
     }
-
+    .sin-registros {
+      text-align: center;
+      color: #9F2241;
+      font-weight: 600;
+      padding: 2em 0;
+      font-size: 1.1em;
+    }
     @media (max-width: 600px) {
       .filtros {
         flex-direction: column;
@@ -116,19 +105,19 @@
 </head>
 <body>
   <header>
-      <img src="../../CHAPULHUACAN/Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
-  <h1>Historial y Auditoría</h1>  </header>
-
+    <img src="../../CHAPULHUACAN/Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+    <h1>Historial y Auditoría</h1>
+  </header>
   <section class="filtros">
     <select id="areaFiltro">
       <option value="">Área</option>
       <option value="Tesorería">Tesorería</option>
       <option value="Obras Públicas">Obras Públicas</option>
+      <option value="Otro">Otro</option>
     </select>
     <input type="date" id="fechaFiltro">
     <button class="buscar-btn" onclick="filtrarRegistros()">Buscar</button>
   </section>
-
   <section class="tabla-container">
     <table>
       <thead>
@@ -138,7 +127,6 @@
           <th>Archivo</th>
           <th>Área</th>
           <th>Fecha</th>
-          <th>Hora</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -146,51 +134,37 @@
         <!-- Se llena dinámicamente -->
       </tbody>
     </table>
+    <div id="sinRegistros" class="sin-registros" style="display:none;">
+      No hay registros para mostrar.
+    </div>
   </section>
-
   <script>
-    const registros = [
-      {
-        usuario: "María López",
-        accion: "Subió",
-        archivo: "Presupuesto 2025.pdf",
-        area: "Tesorería",
-        fecha: "2025-06-10",
-        hora: "10:45"
-      },
-      {
-        usuario: "José Martínez",
-        accion: "Eliminó",
-        archivo: "Gasto Obras.xlsx",
-        area: "Obras Públicas",
-        fecha: "2025-06-09",
-        hora: "16:30"
-      },
-      {
-        usuario: "Ana Pérez",
-        accion: "Editó",
-        archivo: "Reglamento Construcción.docx",
-        area: "Obras Públicas",
-        fecha: "2025-06-08",
-        hora: "09:15"
-      }
-    ];
+    // Cambia la ruta si es necesario
+    const API_URL = '../../Controllers/HistAuditController.php';
 
-    function renderTabla(filtrados) {
+    function renderTabla(registros) {
       const tbody = document.getElementById("tbody");
+      const sinRegistrosDiv = document.getElementById("sinRegistros");
       tbody.innerHTML = "";
-      filtrados.forEach(reg => {
+      if (!registros || registros.length === 0) {
+        sinRegistrosDiv.style.display = "block";
+        return;
+      }
+      sinRegistrosDiv.style.display = "none";
+      registros.forEach(reg => {
+        const usuario = reg.usuario_nombre && reg.usuario_apellidos
+                        ? reg.usuario_nombre + ' ' + reg.usuario_apellidos
+                        : 'Desconocido';
         tbody.innerHTML += `
           <tr>
-            <td>${reg.usuario}</td>
+            <td>${usuario}</td>
             <td>${reg.accion}</td>
             <td>${reg.archivo}</td>
             <td>${reg.area}</td>
             <td>${reg.fecha}</td>
-            <td>${reg.hora}</td>
             <td>
               <button class="ver-btn" onclick='verHistorial("${reg.archivo}")'>Ver</button>
-              <button class="descargar-btn" onclick='descargar("${reg.archivo}")'>Descargar</button>
+              <button class="descargar-btn" onclick='descargar("${reg.archivo_ruta}")'>Descargar</button>
             </td>
           </tr>`;
       });
@@ -199,26 +173,29 @@
     function filtrarRegistros() {
       const area = document.getElementById("areaFiltro").value;
       const fecha = document.getElementById("fechaFiltro").value;
-      const filtrados = registros.filter(reg => {
-        return (area === "" || reg.area === area) &&
-               (fecha === "" || reg.fecha === fecha);
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `area=${encodeURIComponent(area)}&fecha=${encodeURIComponent(fecha)}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        renderTabla(data.registros || []);
+      })
+      .catch(err => {
+        renderTabla([]);
       });
-      renderTabla(filtrados);
     }
 
     function verHistorial(archivo) {
       alert(`Historial del archivo: ${archivo}`);
-      // Aquí puedes abrir un modal o cargar contenido dinámico
     }
 
-    function descargar(nombreArchivo) {
-      alert(`Descarga del: ${nombreArchivo}`);
-      // Reemplaza por una URL real si deseas:
-      // window.location.href = `/descargas/${nombreArchivo}`;
+    function descargar(rutaArchivo) {
+      window.location.href = rutaArchivo;
     }
 
-    // Mostrar todos al cargar
-    renderTabla(registros);
+    document.addEventListener("DOMContentLoaded", filtrarRegistros);
   </script>
 </body>
 </html>

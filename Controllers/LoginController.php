@@ -20,7 +20,8 @@ class LoginController {
             $usuariosdatos = $usuariosQuerys->LoginQuery($this->email, $this->password);
             if ($usuariosdatos) {
                 error_log("Login exitoso para usuario: {$this->email}");
-                $_SESSION['id'] = $usuariosdatos->id; 
+                // CORREGIDO: usar id_usuario en la sesión
+                $_SESSION['id_usuario'] = $usuariosdatos->id; 
                 echo json_encode(array('icon' => 'success', 'text' => 'Bienvenido', 'response'=> 2));
             } else {
                 error_log("Login fallido para usuario: {$this->email}");
