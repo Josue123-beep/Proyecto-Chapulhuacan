@@ -64,22 +64,28 @@ class GestionDocQuerys {
     public function editDocument($id, $titulo, $tipo, $area, $Categoria, $fecha, $descripcion, $subcarpeta, $subcarpetaPersonalizada, $archivo = null) {
         try {
             $uploadDir = __DIR__ . '/../../../uploads/';
-            $archivo_nombre = null;
-            $archivo_ruta = null;
 
-            // 1. Determinar subcarpeta final para guardar el archivo
-            $subcarpetaFinal = '';
-            if ($subcarpeta === 'Otra') {
-                $subcarpetaFinal = trim($subcarpetaPersonalizada);
-                if (!$subcarpetaFinal) {
-                    return ['success' => false, 'message' => 'Debes indicar el nombre de la subcarpeta personalizada.'];
-                }
-            } else {
-                $subcarpetaFinal = $subcarpeta;
-            }
+            // 1. Determinar subcarpeta final
+            $subcarpetaFinal = ($subcarpeta === 'Otra')
+                ? trim($subcarpetaPersonalizada)
+                : trim($subcarpeta);
             $subcarpetaFinal = preg_replace('/[^A-Za-z0-9 _-]/', '', $subcarpetaFinal);
 
-            // 2. Si se sube un archivo nuevo, lo movemos a la subcarpeta seleccionada
+            // 2. Obtener info actual del documento
+            $sqlSel = "SELECT archivo_nombre, archivo_ruta FROM tb_carga_doc WHERE id = ?";
+            $stmtSel = $this->conn->prepare($sqlSel);
+            if (!$stmtSel) throw new Exception($this->conn->error);
+            $stmtSel->bind_param("i", $id);
+            $stmtSel->execute();
+            $stmtSel->bind_result($old_nombre, $old_ruta_rel);
+            $stmtSel->fetch();
+            $stmtSel->close();
+
+            $old_ruta_abs = $old_ruta_rel ? ($uploadDir . $old_ruta_rel) : null;
+            $archivo_nombre = $old_nombre;
+            $archivo_ruta = $old_ruta_rel;
+
+            // 3. Si hay archivo nuevo, subirlo y eliminar el anterior
             if ($archivo && isset($archivo['tmp_name']) && $archivo['tmp_name']) {
                 $ruta_final = $uploadDir . $subcarpetaFinal . '/';
                 if (!is_dir($ruta_final)) {
@@ -95,30 +101,55 @@ class GestionDocQuerys {
                     $rutaDestino = $ruta_final . $nombreFinal;
                     $contador++;
                 }
-
                 if (move_uploaded_file($archivo['tmp_name'], $rutaDestino)) {
+                    // Elimina el archivo anterior si existe
+                    if ($old_ruta_abs && file_exists($old_ruta_abs)) {
+                        unlink($old_ruta_abs);
+                    }
                     $archivo_nombre = $nombreFinal;
-                    // Guardar la ruta relativa a "uploads/"
                     $archivo_ruta = $subcarpetaFinal . "/" . $nombreFinal;
-                    $sql = "UPDATE tb_carga_doc SET titulo=?, tipo=?, area=?, Categoria=?, fecha=?, descripcion=?, archivo_nombre=?, archivo_ruta=? WHERE id=?";
-                    $stmt = $this->conn->prepare($sql);
-                    if (!$stmt) throw new Exception($this->conn->error);
-                    $stmt->bind_param("ssssssssi", $titulo, $tipo, $area, $Categoria, $fecha, $descripcion, $archivo_nombre, $archivo_ruta, $id);
                 } else {
-                    return ['success' => false, 'message' => 'Error al guardar archivo'];
+                    return ['success' => false, 'message' => 'Error al guardar el archivo nuevo'];
                 }
+            } else if ($old_ruta_rel) {
+                // 4. Si NO hay archivo nuevo, pero se cambió de carpeta, mueve el archivo
+                $old_carpeta = dirname($old_ruta_rel);
+                if ($old_carpeta !== $subcarpetaFinal) {
+                    $nombreArchivo = basename($old_ruta_rel);
+                    $nuevaRutaAbs = $uploadDir . $subcarpetaFinal . '/' . $nombreArchivo;
+                    $nuevaRutaRel = $subcarpetaFinal . '/' . $nombreArchivo;
+                    // Crea la carpeta si no existe
+                    if (!is_dir($uploadDir . $subcarpetaFinal)) {
+                        mkdir($uploadDir . $subcarpetaFinal, 0777, true);
+                    }
+                    // Mueve el archivo solo si existe el anterior y no es el mismo destino
+                    if (file_exists($old_ruta_abs) && $old_ruta_abs !== $nuevaRutaAbs) {
+                        if (rename($old_ruta_abs, $nuevaRutaAbs)) {
+                            $archivo_ruta = $nuevaRutaRel;
+                        } else {
+                            return ['success' => false, 'message' => 'No se pudo mover el archivo a la nueva carpeta'];
+                        }
+                    }
+                }
+            }
+
+            // 5. Actualizar la BD (si hay archivo, guardar nombre y ruta. Si no, solo los otros campos)
+            if ($archivo_ruta) {
+                $sql = "UPDATE tb_carga_doc SET titulo=?, tipo=?, area=?, Categoria=?, fecha=?, descripcion=?, archivo_nombre=?, archivo_ruta=? WHERE id=?";
+                $stmt = $this->conn->prepare($sql);
+                if (!$stmt) throw new Exception($this->conn->error);
+                $stmt->bind_param("ssssssssi", $titulo, $tipo, $area, $Categoria, $fecha, $descripcion, $archivo_nombre, $archivo_ruta, $id);
             } else {
-                // Si no se sube archivo, solo actualizar los demás datos
                 $sql = "UPDATE tb_carga_doc SET titulo=?, tipo=?, area=?, Categoria=?, fecha=?, descripcion=? WHERE id=?";
                 $stmt = $this->conn->prepare($sql);
                 if (!$stmt) throw new Exception($this->conn->error);
                 $stmt->bind_param("ssssssi", $titulo, $tipo, $area, $Categoria, $fecha, $descripcion, $id);
             }
-
             $stmt->execute();
             $success = $stmt->affected_rows > 0;
             $stmt->close();
             return ['success'=>$success];
+
         } catch (Exception $e) {
             return ['success'=>false, 'message'=>$e->getMessage()];
         }
