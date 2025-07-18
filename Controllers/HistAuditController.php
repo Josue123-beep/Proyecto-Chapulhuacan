@@ -37,11 +37,31 @@ class HistAuditController
         $registros = $querys->obtenerHistorial($area, $fecha);
         echo json_encode(['registros' => $registros]);
     }
+
+    // NUEVO: Buscar la ruta de un archivo por nombre
+    public function buscarRutaArchivo()
+    {
+        $nombreArchivo = $_POST['archivo_nombre'] ?? '';
+        if (!$nombreArchivo) {
+            echo json_encode(['error' => 'Nombre de archivo requerido']);
+            return;
+        }
+        $ruta = HistAuditQuerys::buscarArchivoEnUploads($nombreArchivo);
+        if ($ruta) {
+            echo json_encode(['ruta' => $ruta]);
+        } else {
+            echo json_encode(['error' => 'Archivo no encontrado']);
+        }
+    }
 }
 
 // Ruteo simple
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['accion']) && !empty($_POST['accion']) && $_POST['accion'] !== 'Mostrar') {
+    if (isset($_POST['buscar_ruta']) && $_POST['buscar_ruta'] == '1') {
+        // Busca la ruta del archivo por nombre
+        $controller = new HistAuditController();
+        $controller->buscarRutaArchivo();
+    } else if (isset($_POST['accion']) && !empty($_POST['accion']) && $_POST['accion'] !== 'Mostrar') {
         // Registrar acción
         $controller = new HistAuditController();
         $controller->registrarAccion();

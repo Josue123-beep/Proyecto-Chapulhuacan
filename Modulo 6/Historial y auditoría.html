@@ -95,17 +95,76 @@
       padding: 2em 0;
       font-size: 1.1em;
     }
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0; top: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      margin: auto;
+      padding: 0;
+      border-radius: 8px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .modal-header {
+      padding: 10px 20px;
+      background: #9F2241;
+      color: #fff;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-close {
+      cursor: pointer;
+      font-size: 24px;
+      font-weight: bold;
+      background: none;
+      border: none;
+      color: #fff;
+    }
+    .modal-body {
+      padding: 0;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-body iframe, .modal-body img {
+      max-width: 80vw;
+      max-height: 80vh;
+      border: none;
+      display: block;
+    }
     @media (max-width: 600px) {
       .filtros {
         flex-direction: column;
         align-items: stretch;
+      }
+      .modal-body iframe, .modal-body img {
+        max-width: 98vw;
+        max-height: 60vh;
       }
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="Chapulhuacan.png" alt="Logo" class="logo" />
+    <img src="../Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
     <h1>Historial y Auditoría</h1>
   </header>
   <section class="filtros">
@@ -138,8 +197,18 @@
       No hay registros para mostrar.
     </div>
   </section>
+  <!-- MODAL PARA VISUALIZAR EL ARCHIVO -->
+  <div class="modal" id="modalVisor">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modalTitle">Visor de documento</span>
+        <button class="modal-close" onclick="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
   <script>
-    // Ajusta la ruta según tu estructura
+    // Cambia según tu estructura de proyecto.
     const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
 
     let intervalId = null;
@@ -157,17 +226,19 @@
       registros.forEach(reg => {
         const usuario = (reg.usuario_nombre ? reg.usuario_nombre : '') +
                         (reg.usuario_apellidos ? ' ' + reg.usuario_apellidos : '');
+        // Usamos solo el nombre del archivo, la ruta se obtiene en JS
+        const archivoNombre = reg.archivo_nombre || '';
         tbody.innerHTML += `
           <tr>
             <td>${usuario}</td>
             <td>${reg.accion}</td>
-            <td>${reg.archivo_nombre || ''}</td>
+            <td>${archivoNombre}</td>
             <td>${reg.area}</td>
             <td>${reg.fecha}</td>
             <td>${reg.descripcion || ''}</td>
             <td>
-              <button class="ver-btn" onclick='verHistorial("${reg.archivo_nombre}")'>Ver</button>
-              <button class="descargar-btn" onclick='descargar("${reg.archivo_ruta}", "${reg.archivo_nombre}")'>Descargar</button>
+              <button class="ver-btn" onclick='verHistorial("${archivoNombre}")'>Ver</button>
+              <button class="descargar-btn" onclick='descargar("${archivoNombre}")'>Descargar</button>
             </td>
           </tr>`;
       });
@@ -191,7 +262,6 @@
       });
     }
 
-    // Actualización automática cada 5 segundos con los filtros actuales
     function actualizarPeriodicamente() {
       fetch(API_URL, {
         method: "POST",
@@ -207,17 +277,74 @@
       });
     }
 
-    function verHistorial(archivo) {
-      alert(`Historial del archivo: ${archivo}`);
-    }
-    function descargar(rutaArchivo, archivoNombre) {
-      // Solo manda datos del archivo y la acción, el usuario se toma de la sesión en el backend
+    // ------- BUSCAR RUTA Y VISUALIZAR/DESCARGAR ARCHIVO --------
+    function obtenerRutaArchivo(nombreArchivo, callback) {
       fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `accion=Descargó&archivo_id=&archivo_nombre=${encodeURIComponent(archivoNombre)}&archivo_ruta=${encodeURIComponent(rutaArchivo)}&descripcion=Descarga de archivo`
+        body: "buscar_ruta=1&archivo_nombre=" + encodeURIComponent(nombreArchivo)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.ruta) callback(data.ruta);
+        else alert(data.error || "Archivo no encontrado");
       });
-      window.location.href = rutaArchivo;
+    }
+
+    function verHistorial(nombreArchivo) {
+      obtenerRutaArchivo(nombreArchivo, function(ruta) {
+        mostrarModal(ruta, nombreArchivo);
+      });
+    }
+
+    function descargar(nombreArchivo) {
+      obtenerRutaArchivo(nombreArchivo, function(ruta) {
+        const link = document.createElement('a');
+        link.href = ruta;
+        link.download = nombreArchivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+    }
+
+    // ---------- MODAL VISOR ----------
+    function mostrarModal(rutaArchivo, nombreArchivo) {
+      const modal = document.getElementById('modalVisor');
+      const modalBody = document.getElementById('modalBody');
+      const modalTitle = document.getElementById('modalTitle');
+      modalTitle.textContent = nombreArchivo || 'Visor de documento';
+      modalBody.innerHTML = '';
+
+      // Detecta tipo de archivo por extensión
+      const ext = rutaArchivo.split('.').pop().toLowerCase();
+      if (["jpg","jpeg","png","gif","bmp","webp"].includes(ext)) {
+        // Imagen
+        modalBody.innerHTML = `<img src="${rutaArchivo}" alt="Imagen" />`;
+      } else if(ext === "pdf") {
+        // PDF
+        modalBody.innerHTML = `<iframe src="${rutaArchivo}" width="800" height="600"></iframe>`;
+      } else {
+        // Otros: intento de abrir en iframe
+        modalBody.innerHTML = `<iframe src="${rutaArchivo}" width="800" height="600"></iframe>
+          <div style="padding:10px;color:#9F2241;">
+            Si el archivo no se visualiza, puedes descargarlo usando el botón Descargar.
+          </div>`;
+      }
+      modal.style.display = "flex";
+    }
+
+    function cerrarModal() {
+      document.getElementById('modalVisor').style.display = "none";
+      document.getElementById('modalBody').innerHTML = "";
+    }
+
+    // Cierra el modal al hacer clic fuera del contenido
+    window.onclick = function(event) {
+      const modal = document.getElementById('modalVisor');
+      if (event.target == modal) {
+        cerrarModal();
+      }
     }
 
     document.addEventListener("DOMContentLoaded", function () {

@@ -47,6 +47,31 @@ class HistAuditQuerys
         return $rows;
     }
 
+    // Buscar un archivo por nombre en uploads y subcarpetas
+    public static function buscarArchivoEnUploads($nombreArchivo, $carpeta = null)
+    {
+        if ($carpeta === null) {
+            $carpeta = __DIR__ . '/../../../uploads';
+        }
+        $nombreArchivo = strtolower($nombreArchivo);
+        $directory = new RecursiveDirectoryIterator($carpeta);
+        $iterator = new RecursiveIteratorIterator($directory);
+
+        foreach ($iterator as $file) {
+            if ($file->isFile() && strtolower($file->getFilename()) === $nombreArchivo) {
+                // Construye la ruta web relativa para el navegador
+                $rutaAbsoluta = $file->getPathname();
+                $rutaRelativa = str_replace(DIRECTORY_SEPARATOR, '/', $rutaAbsoluta);
+                // Encuentra la parte desde /uploads/... en adelante
+                $pos = strpos($rutaRelativa, '/uploads/');
+                if ($pos !== false) {
+                    return '/CHAPULHUACAN' . substr($rutaRelativa, $pos);
+                }
+            }
+        }
+        return false; // No encontrado
+    }
+
     public function __destruct()
     {
         if ($this->conexion) {
