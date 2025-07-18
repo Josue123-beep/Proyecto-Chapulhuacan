@@ -1,26 +1,32 @@
 <?php
-include __DIR__ . "/../Server/DataBase/Querys/HistAuditQuerys.php";
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
 
-class HistAuditController {
-    private ?string $area;
-    private ?string $fecha;
+header("Content-Type: application/json");
+require_once __DIR__ . '/../Server/DataBase/Querys/HistAuditQuerys.php';
 
-    public function __construct() {
-        $this->area = $_POST['area'] ?? null;
-        $this->fecha = $_POST['fecha'] ?? null;
-    }
+class HistAuditController
+{
+    public function obtenerHistorial($area = '', $fecha = '')
+    {
+        $querys = new HistAuditQuerys();
+        $registros = $querys->obtenerHistorial($area, $fecha);
 
-    public function obtenerHistorial() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            echo json_encode(['error' => 'Método no permitido']);
+        if ($registros === false) {
+            echo json_encode(['registros' => [], 'error' => 'Error de base de datos']);
             return;
         }
-        $querys = new HistAuditQuerys();
-        $registros = $querys->obtenerRegistros($this->area, $this->fecha);
+
         echo json_encode(['registros' => $registros]);
     }
 }
 
-$controller = new HistAuditController();
-$controller->obtenerHistorial();
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $area = $_POST['area'] ?? '';
+    $fecha = $_POST['fecha'] ?? '';
+    $controller = new HistAuditController();
+    $controller->obtenerHistorial($area, $fecha);
+} else {
+    echo json_encode(['registros' => [], 'error' => 'Método no permitido']);
+}
 ?>

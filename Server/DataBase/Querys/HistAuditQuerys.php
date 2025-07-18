@@ -1,56 +1,69 @@
 <?php
-include_once __DIR__ . "/../Conexion.php";
+require_once __DIR__ . '/../Conexion.php';
 
-class HistAuditQuerys {
+class HistAuditQuerys
+{
     private $conexion;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->conexion = Conexion::obtenerConexion();
     }
 
-    public function obtenerRegistros($area = null, $fecha = null) {
-        $query = "SELECT 
-                    usuario_nombre,
-                    usuario_apellidos,
-                    accion,
-                    archivo_nombre AS archivo,
-                    area,
-                    fecha,
-                    archivo_ruta
-                  FROM tb_historial
-                  WHERE 1=1";
+    public function obtenerHistorial($area = '', $fecha = '')
+    {
+        $filtros = [];
         $params = [];
-        $types = "";
+        $tipos = "";
 
-        if ($area) {
-            $query .= " AND area = ?";
+        if (!empty($area)) {
+            $filtros[] = "area = ?";
             $params[] = $area;
-            $types .= "s";
+            $tipos .= "s";
         }
-        if ($fecha) {
-            $query .= " AND DATE(fecha) = ?";
+        if (!empty($fecha)) {
+            $filtros[] = "DATE(fecha) = ?";
             $params[] = $fecha;
-            $types .= "s";
+            $tipos .= "s";
         }
-        $query .= " ORDER BY fecha DESC";
 
-        $stmt = $this->conexion->prepare($query);
-        if ($params) {
-            $stmt->bind_param($types, ...$params);
+        $sql = "SELECT * FROM tb_historial";
+        if (!empty($filtros)) {
+            $sql .= " WHERE " . implode(" AND ", $filtros);
         }
-        $stmt->execute();
+        $sql .= " ORDER BY fecha DESC";
+
+        $stmt = $this->conexion->prepare($sql);
+        if (!$stmt) return false;
+
+        if (!empty($params)) {
+            $stmt->bind_param($tipos, ...$params);
+        }
+
+        if (!$stmt->execute()) {
+            $stmt->close();
+            return false;
+        }
+
         $result = $stmt->get_result();
+        if (!$result) {
+            $stmt->close();
+            return false;
+        }
 
-        $registros = [];
+        $rows = [];
         while ($row = $result->fetch_assoc()) {
-            $registros[] = $row;
+            $rows[] = $row;
         }
         $stmt->close();
-        return $registros;
+        return $rows;
     }
 
-    public function __destruct() {
-        $this->conexion->close();
+    public function __destruct()
+    {
+        if ($this->conexion) {
+            $this->conexion->close();
+        }
     }
 }
 ?>

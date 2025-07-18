@@ -1,16 +1,11 @@
 <?php
-// ¡NO PONGAS ESPACIOS NI LÍNEAS EN BLANCO ANTES DE ESTA LÍNEA!
-
-// Forzar salida estrictamente como JSON
-header('Content-Type: application/json');
-
-// Reporte de errores sólo para desarrollo (puedes desactivarlo en producción)
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 // Si es GET, respondemos con las carpetas disponibles en uploads/
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Content-Type: application/json');
     $baseDir = realpath(__DIR__ . '/../uploads');
     $carpetas = [];
     if ($baseDir && is_dir($baseDir)) {
@@ -54,11 +49,6 @@ class CargaDocController {
     }
 
     public function cargar() {
-        // Iniciar sesión antes de cualquier output
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['icon' => 'error', 'text' => 'Método no permitido']);
             return;
@@ -68,6 +58,7 @@ class CargaDocController {
         $conexion = Conexion::obtenerConexion();
 
         // Obtener ID usuario desde sesión
+        session_start();
         $id_usuario = $_SESSION['id_usuario'] ?? null;
         if (!$id_usuario) {
             echo json_encode(['icon' => 'error', 'text' => 'Sesión de usuario no encontrada']);
@@ -84,15 +75,16 @@ class CargaDocController {
         }
 
         // Determinar subcarpeta final
-        $subcarpetaFinal = ($this->subcarpeta === 'Otra')
-            ? trim($this->subcarpetaPersonalizada)
-            : $this->subcarpeta;
-
-        if (!$subcarpetaFinal) {
-            echo json_encode(['icon' => 'warning', 'text' => 'Debes indicar el nombre de la subcarpeta personalizada.']);
-            return;
+        $subcarpetaFinal = '';
+        if ($this->subcarpeta === 'Otra') {
+            $subcarpetaFinal = trim($this->subcarpetaPersonalizada);
+            if (!$subcarpetaFinal) {
+                echo json_encode(['icon' => 'warning', 'text' => 'Debes indicar el nombre de la subcarpeta personalizada.']);
+                return;
+            }
+        } else {
+            $subcarpetaFinal = $this->subcarpeta;
         }
-
         $subcarpetaFinal = preg_replace('/[^A-Za-z0-9 _-]/', '', $subcarpetaFinal);
 
         $permitidos = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'jpg', 'jpeg', 'png'];
@@ -152,7 +144,7 @@ class CargaDocController {
                 $nombreFinal,
                 $archivoRutaRelativa,
                 $this->categoria,
-                $id_usuario // debe guardarse en tb_carga_doc
+                $id_usuario // <--- asegúrate de que tu método acepte este parámetro y lo guarde en tb_carga_doc
             );
 
             if ($guardado) {
@@ -202,5 +194,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new CargaDocController();
     $controller->cargar();
 }
-
-// ¡NO PONGAS NADA DESPUÉS DE ESTA LÍNEA! Ni ?> ni espacios.
+?>

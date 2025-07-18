@@ -113,6 +113,7 @@
       <option value="">Área</option>
       <option value="Tesorería">Tesorería</option>
       <option value="Obras Públicas">Obras Públicas</option>
+      <option value="DIF">DIF</option>
       <option value="Otro">Otro</option>
     </select>
     <input type="date" id="fechaFiltro">
@@ -127,20 +128,19 @@
           <th>Archivo</th>
           <th>Área</th>
           <th>Fecha</th>
+          <th>Descripción</th>
           <th>Acciones</th>
         </tr>
       </thead>
-      <tbody id="tbody">
-        <!-- Se llena dinámicamente -->
-      </tbody>
+      <tbody id="tbody"></tbody>
     </table>
     <div id="sinRegistros" class="sin-registros" style="display:none;">
       No hay registros para mostrar.
     </div>
   </section>
   <script>
-    // Cambia la ruta si es necesario
-    const API_URL = '../../Controllers/HistAuditController.php';
+    // AJUSTA LA RUTA SEGÚN TU ESTRUCTURA DE CARPETAS
+const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
 
     function renderTabla(registros) {
       const tbody = document.getElementById("tbody");
@@ -152,18 +152,18 @@
       }
       sinRegistrosDiv.style.display = "none";
       registros.forEach(reg => {
-        const usuario = reg.usuario_nombre && reg.usuario_apellidos
-                        ? reg.usuario_nombre + ' ' + reg.usuario_apellidos
-                        : 'Desconocido';
+        const usuario = (reg.usuario_nombre ? reg.usuario_nombre : '') + 
+                        (reg.usuario_apellidos ? ' ' + reg.usuario_apellidos : '');
         tbody.innerHTML += `
-          <tr>
+          <tr>      
             <td>${usuario}</td>
             <td>${reg.accion}</td>
-            <td>${reg.archivo}</td>
+            <td>${reg.archivo_nombre || ''}</td>
             <td>${reg.area}</td>
             <td>${reg.fecha}</td>
+            <td>${reg.descripcion || ''}</td>
             <td>
-              <button class="ver-btn" onclick='verHistorial("${reg.archivo}")'>Ver</button>
+              <button class="ver-btn" onclick='verHistorial("${reg.archivo_nombre}")'>Ver</button>
               <button class="descargar-btn" onclick='descargar("${reg.archivo_ruta}")'>Descargar</button>
             </td>
           </tr>`;
@@ -180,9 +180,11 @@
       })
       .then(res => res.json())
       .then(data => {
+        console.log("Respuesta del servidor:", data); // <-- DEBERÍAS VER TUS REGISTROS AQUÍ
         renderTabla(data.registros || []);
       })
       .catch(err => {
+        alert("Error al conectar con el servidor o el archivo PHP.");
         renderTabla([]);
       });
     }
@@ -190,11 +192,9 @@
     function verHistorial(archivo) {
       alert(`Historial del archivo: ${archivo}`);
     }
-
     function descargar(rutaArchivo) {
       window.location.href = rutaArchivo;
     }
-
     document.addEventListener("DOMContentLoaded", filtrarRegistros);
   </script>
 </body>
