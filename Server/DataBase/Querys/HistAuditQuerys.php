@@ -10,52 +10,40 @@ class HistAuditQuerys
         $this->conexion = Conexion::obtenerConexion();
     }
 
+    // Insertar acción en el historial
+    public function registrarAccion($data)
+    {
+        require_once __DIR__ . '/registro_historial.php';
+        return registrarEnHistorial($this->conexion, $data);
+    }
+
+    // Obtener historial, con filtro opcional por área y fecha
     public function obtenerHistorial($area = '', $fecha = '')
     {
-        $filtros = [];
+        $sql = "SELECT * FROM tb_historial WHERE 1=1";
         $params = [];
-        $tipos = "";
-
-        if (!empty($area)) {
-            $filtros[] = "area = ?";
+        $types = '';
+        if ($area) {
+            $sql .= " AND area = ?";
             $params[] = $area;
-            $tipos .= "s";
+            $types .= "s";
         }
-        if (!empty($fecha)) {
-            $filtros[] = "DATE(fecha) = ?";
+        if ($fecha) {
+            $sql .= " AND DATE(fecha) = ?";
             $params[] = $fecha;
-            $tipos .= "s";
-        }
-
-        $sql = "SELECT * FROM tb_historial";
-        if (!empty($filtros)) {
-            $sql .= " WHERE " . implode(" AND ", $filtros);
+            $types .= "s";
         }
         $sql .= " ORDER BY fecha DESC";
-
         $stmt = $this->conexion->prepare($sql);
-        if (!$stmt) return false;
-
-        if (!empty($params)) {
-            $stmt->bind_param($tipos, ...$params);
+        if ($params) {
+            $stmt->bind_param($types, ...$params);
         }
-
-        if (!$stmt->execute()) {
-            $stmt->close();
-            return false;
-        }
-
+        $stmt->execute();
         $result = $stmt->get_result();
-        if (!$result) {
-            $stmt->close();
-            return false;
-        }
-
         $rows = [];
         while ($row = $result->fetch_assoc()) {
             $rows[] = $row;
         }
-        $stmt->close();
         return $rows;
     }
 

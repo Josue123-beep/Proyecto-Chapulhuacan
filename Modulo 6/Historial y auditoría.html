@@ -105,7 +105,7 @@
 </head>
 <body>
   <header>
-    <img src="../../CHAPULHUACAN/Modulo 1/Chapulhuacan.png" alt="Logo" class="logo" />
+    <img src="Chapulhuacan.png" alt="Logo" class="logo" />
     <h1>Historial y Auditoría</h1>
   </header>
   <section class="filtros">
@@ -139,8 +139,11 @@
     </div>
   </section>
   <script>
-    // AJUSTA LA RUTA SEGÚN TU ESTRUCTURA DE CARPETAS
-const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
+    // Ajusta la ruta según tu estructura
+    const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
+
+    let intervalId = null;
+    let filtrosActuales = { area: "", fecha: "" };
 
     function renderTabla(registros) {
       const tbody = document.getElementById("tbody");
@@ -152,10 +155,10 @@ const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
       }
       sinRegistrosDiv.style.display = "none";
       registros.forEach(reg => {
-        const usuario = (reg.usuario_nombre ? reg.usuario_nombre : '') + 
+        const usuario = (reg.usuario_nombre ? reg.usuario_nombre : '') +
                         (reg.usuario_apellidos ? ' ' + reg.usuario_apellidos : '');
         tbody.innerHTML += `
-          <tr>      
+          <tr>
             <td>${usuario}</td>
             <td>${reg.accion}</td>
             <td>${reg.archivo_nombre || ''}</td>
@@ -164,7 +167,7 @@ const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
             <td>${reg.descripcion || ''}</td>
             <td>
               <button class="ver-btn" onclick='verHistorial("${reg.archivo_nombre}")'>Ver</button>
-              <button class="descargar-btn" onclick='descargar("${reg.archivo_ruta}")'>Descargar</button>
+              <button class="descargar-btn" onclick='descargar("${reg.archivo_ruta}", "${reg.archivo_nombre}")'>Descargar</button>
             </td>
           </tr>`;
       });
@@ -173,6 +176,7 @@ const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
     function filtrarRegistros() {
       const area = document.getElementById("areaFiltro").value;
       const fecha = document.getElementById("fechaFiltro").value;
+      filtrosActuales = { area, fecha };
       fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -180,11 +184,25 @@ const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
       })
       .then(res => res.json())
       .then(data => {
-        console.log("Respuesta del servidor:", data); // <-- DEBERÍAS VER TUS REGISTROS AQUÍ
         renderTabla(data.registros || []);
       })
       .catch(err => {
-        alert("Error al conectar con el servidor o el archivo PHP.");
+        renderTabla([]);
+      });
+    }
+
+    // Actualización automática cada 5 segundos con los filtros actuales
+    function actualizarPeriodicamente() {
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `area=${encodeURIComponent(filtrosActuales.area)}&fecha=${encodeURIComponent(filtrosActuales.fecha)}`
+      })
+      .then(res => res.json())
+      .then(data => {
+        renderTabla(data.registros || []);
+      })
+      .catch(err => {
         renderTabla([]);
       });
     }
@@ -192,10 +210,22 @@ const API_URL = '/CHAPULHUACAN/Controllers/HistAuditController.php';
     function verHistorial(archivo) {
       alert(`Historial del archivo: ${archivo}`);
     }
-    function descargar(rutaArchivo) {
+    function descargar(rutaArchivo, archivoNombre) {
+      // Solo manda datos del archivo y la acción, el usuario se toma de la sesión en el backend
+      fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `accion=Descargó&archivo_id=&archivo_nombre=${encodeURIComponent(archivoNombre)}&archivo_ruta=${encodeURIComponent(rutaArchivo)}&descripcion=Descarga de archivo`
+      });
       window.location.href = rutaArchivo;
     }
-    document.addEventListener("DOMContentLoaded", filtrarRegistros);
+
+    document.addEventListener("DOMContentLoaded", function () {
+      filtrarRegistros();
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(actualizarPeriodicamente, 5000);
+      document.querySelector('.buscar-btn').addEventListener('click', filtrarRegistros);
+    });
   </script>
 </body>
 </html>
